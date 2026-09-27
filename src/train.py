@@ -177,5 +177,52 @@ def main():
     # ---- training curves ----
     fig, ax1 = plt.subplots(figsize=(8, 4.5))
     ax1.plot(history["loss"], label="train loss", color="tab:blue")
-    ax1.set_xlabel("Epoch"); ax1.set_ylabel("Loss", color="tab:blue")
-}
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("Loss", color="tab:blue")
+    ax2 = ax1.twinx()
+    ax2.plot(history["val_acc"], label="val acc", color="tab:green")
+    ax2.plot(history["val_f1"], label="val macro-F1", color="tab:orange")
+    ax2.set_ylabel("Metric")
+    lines = ax1.get_lines() + ax2.get_lines()
+    ax1.legend(lines, [l.get_label() for l in lines], loc="center right")
+    plt.title("MS-TCN++ training curves")
+    fig.tight_layout()
+    fig.savefig(os.path.join(C.RESULT_DIR, f"training_curve{'_' + args.tag if args.tag else ''}.png"), dpi=150)
+    plt.close(fig)
+
+    # ---- confusion matrix ----
+    fig, ax = plt.subplots(figsize=(7, 6))
+    im = ax.imshow(best_cm, cmap="Blues")
+    ax.set_xticks(range(C.NUM_CLASSES)); ax.set_yticks(range(C.NUM_CLASSES))
+    ax.set_xticklabels(C.CLASSES, rotation=45, ha="right")
+    ax.set_yticklabels(C.CLASSES)
+    ax.set_xlabel("Predicted"); ax.set_ylabel("True")
+    for i in range(C.NUM_CLASSES):
+        for j in range(C.NUM_CLASSES):
+            ax.text(j, i, best_cm[i, j], ha="center", va="center",
+                    color="white" if best_cm[i, j] > best_cm.max() / 2 else "black",
+                    fontsize=8)
+    plt.title(f"Validation confusion matrix (epoch {best_epoch})")
+    fig.colorbar(im)
+    fig.tight_layout()
+    fig.savefig(os.path.join(C.RESULT_DIR, f"confusion_matrix{'_' + args.tag if args.tag else ''}.png"), dpi=150)
+    plt.close(fig)
+
+    # ---- metrics summary ----
+    report = {
+        "best_epoch": best_epoch,
+        "val_frame_acc": round(float(history["val_acc"][best_epoch - 1]), 4),
+        "val_macro_f1": round(best_f1, 4),
+        "per_class_f1": {C.CLASSES[i]: round(float(best_f1s[i]), 4)
+                         for i in range(C.NUM_CLASSES)},
+        "confusion_matrix": best_cm.tolist(),
+    }
+    with open(os.path.join(C.RESULT_DIR, metrics_name), "w",
+              encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    print("[INFO] weights ->", os.path.join(C.CKPT_DIR, ckpt_name))
+
+
+if __name__ == "__main__":
+    main()
