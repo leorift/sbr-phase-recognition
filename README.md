@@ -57,10 +57,6 @@ src/
   eval_ablation.py         # ablation evaluation (feature slice / RF / fps)
   make_calib_clips.py      # prefix (first-30%) calibration protocol
   make_calib_sparse.py     # sparse-window calibration protocol
-  baseline_replay.py       # offline replay of the hard-coded rule baseline
-  make_paper_figs.py       # paper figure generation
-  make_report_assets.py    # report figure generation
-  make_demo_video.py       # phase-transition highlight demo video
 ```
 
 ## Environment
